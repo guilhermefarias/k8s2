@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t guilhermefarias/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true guilhermefarias/frontend npm run test
+
+after_success:
+  - docker build -t amigoapp/multi-client ./client
+  - docker build -t amigoapp/multi-nginx ./nginx
+  - docker build -t amigoapp/multi-server ./server
+  - docker build -t amigoapp/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and pusha them to docker hub
+  - docker push amigoapp/multi-client
+  - docker push amigoapp/multi-nginx
+  - docker push amigoapp/multi-server
+  - docker push amigoapp/multi-worker
